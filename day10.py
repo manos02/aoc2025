@@ -1,8 +1,12 @@
+from collections import defaultdict
+import itertools
+
 file = open('input.txt', 'r')
 lines = file.read().strip().split("\n")
 
 
 def press(current, combination):
+
     for c in combination:
         if current[int(c)] == "#":
             index = int(c)
@@ -11,33 +15,50 @@ def press(current, combination):
             index = int(c)
             current = current[:index] + "#" + current[index+1:]
 
+    return current
 
-max = 1000000000000
-
-def find_lowest(combination, current, buttons, steps):
-
-
-
-    if current == combination:
-        return steps
+def generate_graph(len_combination, buttons):
+    graph = defaultdict(list)
+    combinations = list(itertools.product(['#', '.'], repeat=len_combination))
+    combinations = list(map(lambda x: ''.join(x), combinations))
+    for comb in combinations:
+        for button in buttons:
+            res = press(comb, button)
+            if res != comb:
+                graph[comb].append(res)
     
-    # if steps > max:
-    #     return 
-    totals = []
-    for i in range(len(buttons)):
-        totals[i] = find_lowest(combination, press(current, buttons[i]), lights, steps+1)
-        return min(totals[i])
+    return graph
+    
 
 
+def bfs(graph, node, target): #function for BFS
+    visited = defaultdict(dict) # List for visited nodes.
+    queue = []     #Initialize a queue
+    if node == target:
+        return 0
+    visited[node] = 0
+    queue.append( node)
+    while queue:          # Creating loop to visit each node
+        m = queue.pop(0) 
+        count = visited[m]
+        if m == target:
+            return count
 
+        for neighbour in graph[m]:
+            if neighbour not in visited:
+
+                visited[neighbour] = count + 1
+                queue.append(neighbour)
+
+total = 0
 for l in lines:
     t = l.split()
     t.pop()
-    lights = t.pop(0)
-    buttons = t[1:len(t)-1]
-    lights = lights[1:len(lights)-1]
+    combination = t.pop(0)
+    buttons = t[::]
+    combination = combination[1:len(combination)-1]
     buttons = list(map(lambda x: x[1:len(x)-1].split(","), buttons))
-    print(buttons, lights)
-    find_lowest(lights, "." * len(lights), buttons, 0)
+    graph = generate_graph(len(combination), buttons)
+    total += bfs(graph, "." * len(combination), combination)
 
-    
+print(total)
