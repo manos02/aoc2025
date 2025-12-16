@@ -1,38 +1,35 @@
-from collections import defaultdict
-import itertools
-import numpy as np
 from ortools.sat.python import cp_model
+
 
 file = open('input.txt', 'r')
 lines = file.read().strip().split("\n")
 
-
 def solve_linear_equations(buttons, combination):
 
-    equations = defaultdict(list)
-    combination = [int(c) for c in combination.split(",")]
-    
-    # print(buttons, combination)
-    for i, c in enumerate(combination):
-        for b in buttons:
-            if i not in b:
-                equations[i].append(0)
-                continue
-            equations[i].append(1)
-            # for num in b:
+    target = [int(c) for c in combination.split(",")]
+    num_counters = len(target)
+    num_buttons = len(buttons)
+    max_target = max(target)
 
+    model = cp_model.CpModel()
+    presses = [model.NewIntVar(0, max_target, f"p{j}") for j in range(num_buttons)]
 
-    val = [combination[i] for i in equations.keys()]
-    a = np.array(list(equations.values()))
-    b = np.array(val)
+    for i in range(num_counters):
+        affecting = [presses[j] for j, btn in enumerate(buttons) if i in btn]
+        model.Add(sum(affecting) == target[i])
 
-    # solve 2 linear equations
+    model.Minimize(sum(presses))
+
+    solver = cp_model.CpSolver()
+    status = solver.Solve(model)
+ 
+    return int(sum(solver.Value(v) for v in presses))
+
 
 
 
 def process(buttons, n):
     buttons = [int(x) for x in buttons]
-    # buttons.extend([0] * (n - len(buttons)))
     return buttons
 
 total = 0
@@ -43,15 +40,7 @@ for l in lines:
     combination = (combination[1:len(combination)-1])
     buttons = list(map(lambda x: x[1:len(x)-1].split(","), t))
     buttons = [process(b, len(combination.split(","))) for b in buttons]
-    solve_linear_equations(buttons, combination)
-    break
-    # total += bfs(graph, "." * len(combination), combination)
+    total += solve_linear_equations(buttons, combination)
 
-# print(total)
+print(total)
 
-
-'''
-a + b + d = 7
-b + 
-
-'''
