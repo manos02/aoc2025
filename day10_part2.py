@@ -25,9 +25,6 @@ def solve_linear_equations(buttons, combination):
  
     return int(sum(solver.Value(v) for v in presses))
 
-
-
-
 def process(buttons, n):
     buttons = [int(x) for x in buttons]
     return buttons
